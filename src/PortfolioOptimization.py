@@ -86,11 +86,6 @@ class PortfolioOptimization:
         maxSR_ret, maxSR_std, maxSrAllocation, minVar_ret, minVar_std, minVarAllocation, efficientFrontierList, targetReturns = (
             self.calculatedResults(meanReturns, covMatrix, riskFreeRate, constrainSet))
 
-        rfr = go.Scatter(name='Maximum Sharpe Ratio',
-                                    mode='lines+markers',
-
-                                    y=[riskFreeRate],
-                                    marker=dict(color='blue', size=14, line=dict(width=3, color='black')))
 
         maxSharpeRatio = go.Scatter(name='Maximum Sharpe Ratio',
                                     mode='markers',
@@ -110,7 +105,7 @@ class PortfolioOptimization:
                               y=[round(target * 100, 2) for target in targetReturns],
                               line=dict(color='black', width=3, dash='dashdot'))
 
-        data = [rfr, maxSharpeRatio, minVolRatio, ef_curve]
+        data = [ maxSharpeRatio, minVolRatio, ef_curve]
         layout = go.Layout(
             title='Portfolio Optimization with Efficient Frontier',
             yaxis=dict(title='Annualized Returns (%)'),
