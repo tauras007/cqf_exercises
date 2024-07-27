@@ -2,9 +2,16 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import scipy.stats as stats
+import statsmodels.api as sm
 import openpyxl as xl
+import cufflinks as cf
+
 
 class LogNormalRandomWalk:
+
+    def __init__(self):
+        cf.set_config_file(offline=True)
+
     def readExcel(self, filename):
         return pd.read_excel(filename)
 
@@ -24,7 +31,7 @@ class LogNormalRandomWalk:
         scaledRtns = []
         for i in range(len(returns)):
             if i < len(returns):
-                scaledRtns.append((returns[i] - np.mean(returns)) / np.std(returns))
+                scaledRtns.append(((returns[i] - np.mean(returns)) / np.std(returns)) * (1/np.sqrt(timestep)))
         return scaledRtns
 
     def getBucketWidth(self, scaledRtns):
@@ -49,14 +56,10 @@ class LogNormalRandomWalk:
             sampleBucketMid.append(sampleBucket[i] - (0.5 * bucketWidth))
         return sampleBucketMid
 
-    def empiricalPDF(self):
-        returns = self.calculateReturn("../resources/Copy_JU241.1 SPX.xlsm", 2)
-        scaledReturns = self.scaleReturns(returns, 2)
-        sampleBucket = self.createBuckets(scaledReturns)
-        bucketWidth = self.getBucketWidth(scaledReturns)
-        sampleBucketMid = self.getBucketMids(sampleBucket, bucketWidth)
+    def empiricalPDF(self, scaledReturns):
+        sampleBucketMid = self.getBucketMeans(scaledReturns)
         count = len(scaledReturns) - 1
-        freq = np.histogram(scaledReturns, sampleBucket)
+        freq = np.histogram(scaledReturns, self.createBuckets(scaledReturns))
         frq = []
         for i in range(len(freq[0])):
             frq.append(freq[0][i])
@@ -64,26 +67,40 @@ class LogNormalRandomWalk:
 
         empiricalPdf = []
         for i in range(len(sampleBucketMid)):
-            empiricalPdf.append(frq[i] / count / bucketWidth)
+            empiricalPdf.append(frq[i] / count / self.getBucketWidth(scaledReturns))
 
-        self.plotPDFS(sampleBucketMid, empiricalPdf)
+        return empiricalPdf
 
-    def normalPdf(self):
-        returns = self.calculateReturn("../resources/Copy_JU241.1 SPX.xlsm", 2)
-        scaledReturns = self.scaleReturns(returns, 2)
-        sampleBucket = self.createBuckets(scaledReturns)
-        bucketWidth = self.getBucketWidth(scaledReturns)
-        sampleBucketMid = self.getBucketMids(sampleBucket, bucketWidth)
+    def normalPdf(self, scaledReturns):
+        sampleBucketMid = self.getBucketMeans(scaledReturns)
         normalPdf = []
         for i in range(len(sampleBucketMid)):
             normalPdf.append(1 / np.sqrt(2 * np.pi) * np.exp(-0.5 * sampleBucketMid[i] * sampleBucketMid[i]))
 
-        self.plotPDFS(sampleBucketMid, normalPdf)
+        return normalPdf
+
+    def getBucketMeans(self, scaledReturns):
+        sampleBucket = self.createBuckets(scaledReturns)
+        bucketWidth = self.getBucketWidth(scaledReturns)
+        sampleBucketMid = self.getBucketMids(sampleBucket, bucketWidth)
+        return sampleBucketMid
+
+    def getScaledReturns(self, timestep):
+        returns = self.calculateReturn("../resources/Copy_JU241.1 SPX.xlsm", timestep)
+        scaledReturns = self.scaleReturns(returns, timestep)
+        return scaledReturns
 
     def combinePdfs(self):
         self.plotProperties()
-        self.empiricalPDF()
-        self.normalPdf()
+        scaledReturns = self.getScaledReturns(1)
+        self.plotPDFS(self.getBucketMeans(scaledReturns), self.empiricalPDF(scaledReturns))
+        self.plotPDFS(self.getBucketMeans(scaledReturns), self.normalPdf(scaledReturns))
+        plt.show()
+
+    def qqplots(self):
+        scaledReturns = self.getScaledReturns(2)
+        stats.probplot(self.empiricalPDF(scaledReturns), plot=plt)
+        sm.qqplot(self.empiricalPDF(scaledReturns), plot=plt)
         plt.show()
 
     def plotProperties(self):
