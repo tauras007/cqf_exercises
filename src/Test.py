@@ -24,6 +24,7 @@ cov2 = np.diag([1, 1, 1, 1])
 """Since the square matrix whose determinant is zero is a singular matrix, it cannot be 
 inverted and thus we cannot have a solution"""
 cov3 = np.ones((4, 4))
+print(popt.calculateWeights(returns, cov1, stdMatrix, 0.10))
 print(popt.calcPortfolioReturnsAndVolatilityOnEfficientFrontier(returns, cov1, stdMatrix, 0.05))
 print(popt.onEfficientFrontier(returns, cov1, stdMatrix, 0.05))
 

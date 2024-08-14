@@ -117,6 +117,7 @@ class PortfolioOptimization:
                         borderwidth=2),
             width=800, height=600)
 
+
         fig = go.Figure(data=data, layout=layout)
         return fig.show()
 
